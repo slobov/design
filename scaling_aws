@@ -1,0 +1,59 @@
+AWS system:
+
+Step 1: Use cases and constraints:
+
+	- traffic is not evenly distributed
+	- 10 million users
+	- 1 billion writes / 10 billion reads per monh 
+
+	- 1:100 write / read ratio -> 400 writes / 40000 reads per second
+	- 1 kb content per write 
+		-> 1000 000 000 000 byte 
+		-> 1 TB of new data per month 
+		-> 36 TB of new data in 3 years
+
+
+Step 2: high-level design
+
+
+Step 3: design core components:
+	
+	- vertical vs horisontal scaling
+	- 1-2 users -> web / app / db (MySql) on the same box
+	- SQL vs NoSQL
+	- Route 53 / Elastic IP / close/secure unnecessary ports (80 HTTP, 443 HTTPS, 22 SSH for whitelisted IPs)
+
+
+Step 4: scale the design:
+	
+	Users+ :
+
+		MySql database is a bottlneck
+
+		- separate MySQL box for metadata and Object Store for the static content (images, JS, CSS, etc...)
+		- Amazon RDS to manage MySql
+		- Amazon S3 to manage object store
+
+		- use Amazon Virtual Private Cloud:
+			- to create a public subnet for the single web server
+			- to create a private subnet for the rest, preventing outside access
+			- only open ports fron whitelisted IPs for each component
+
+	Users++ :
+
+		Web server is a bottleneck
+
+		- add load balancer - Amazon ELB or HAProxy
+		- terminate SSL on load balancer to reduce backend's computaional load
+		- use multiple Web-Servers
+
+		- use multiple MySql instances in master-slave mode
+
+		- separate Web Servers from Application Servers (Write API / Read API)
+		- Web Servers can run as Reverse Proxy
+
+		- move static and some dynamic content to CDN (CloudFront for example)
+
+
+
+
