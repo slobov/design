@@ -1,0 +1,50 @@
+Design data structures for social network:
+	
+	Step 1: usecases and constraints:
+
+		Use cases:
+			- user searches for someone and sees the shortest path to the searched person
+			- service high availability
+
+
+		Constraints and assumptions:
+
+			State assumptions:
+				- 100 million users
+				- 50 friends per user average
+				- 1 billion friend searches per month
+
+				- 100 millions * 50 users = 5 billions connections
+				- 1 billion searches per month / 2.5 millions seconds per month = 400 requiests per second
+
+	Step 2: high-level design:
+
+
+	Step 3: design core components:
+
+	Step 4: scale the design:
+
+		- Caching: what to cache (partial BFS traversals)
+		- Pre-compute (offline batch jobs) complete or partial BFS traversals and store them
+	  	  in No-SQL database to speed-up subsequent lookups.
+    	- Shard Person servers by location
+   		- Start two BFS in parallel / start searching from people with large number of friends / etc...
+
+
+?? graph-specific solutions- Neo4j
+
+Notes: 
+
+	- How load balancer checks web-server helth:
+		- intercepting error responces to regular requests (is 200 OK ?)
+		- using more sopfisticated application health-check methods (heratbit)
+	- Session persistence(sticky-sessions) provided by load ballancers
+	- Reverse-proxy: IP blacklisting (useful in case of DOS attacks) / rate limiter
+	- Reverse-proxy: web acceleration: copression / SSL termination / caching (check caching strategies - internal / external)
+	- See https://www.nginx.com/resources/glossary/reverse-proxy-vs-load-balancer/ for more
+
+	- Sharding vs Clustering:
+
+	- Caching: 
+
+
