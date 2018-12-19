@@ -54,6 +54,68 @@ Step 4: scale the design:
 
 		- move static and some dynamic content to CDN (CloudFront for example)
 
+    Users+++ :
+
+    	MySql suffering from the high read requests
+
+    	- move some data to a Memory Cache (like Amazon Elasticache) to reduce load and latency:
+    		- frequently accessed content from database (but check if MySql database cache is
+    			configured properly before implementing a Memory Cache)
+    		- session data from the Web Servers to make them stateles to allow
+    		  	autoscaling
+    	
+    	- add MySql Read Replicas to reduce load on the write master:
+    		- add Load Balancers in front of MySql read replicas
+
+    	- add more Web Servers and Application Servers 
+
+    Users++++ :
+
+    	Traffic spikes during regular business hours and drop significantly then.
+    	So we can cut costs by automatically spinning up and down servers based
+    	on actual load.
+
+    	- add Amazon Autoscaling:
+    		- one group for Web Servers and one for Application Servers, place each group
+    			to multiple availability zones
+    		- set a min and max number of instances
+    		- trigger to scale up and down through Amazon CloudWatch:
+    			- simple time of day metric for predictable loads
+    			- metrics over a time period: CPU load, latency, Network traffic, Custom metrics
+    	- automate DevOps automation (Chef, Puppet, Ansible)
+    	- monitoring metrics:
+    		- host level
+    		- aggregate level - load balancer stats
+    		- log analysis - Amazon CloudWatch, CloudTrail, Loggly, Splunk, Sumo
+    		- external site performance - Pingdom, New Relic
+    		- handle notifications and incidents - PagerDuty
+    		- error reporting - Sentry
+
+    Users+++++ :
+
+
+    	- if MySql starts to grow too large - consider only storing a limited time period
+    	  	of data in the database and storing the rest in a data warehouse 
+    	  	(Amazon Redshift can comfortably handle 1 TB of new data per month)
+    	- scale Memory Cache to handle 40000 read requests + we'll probably need to employ
+    		additional SQL scaling patterns (federation / sharding)
+    	- to further address higher read/write requests consider NoSql database such as DynamoDB)
+
+    	- further separate Application servers (Write API, Read API, Write Async API - below)
+    	- batch processes or computations that do not need to be done in real time can be done
+    		Asynchronoysly with Queues and Workers:
+    			For example, in a photo service, the photo upload and thumbnail creation can be separated
+    			- client uploads photo
+    			- Application Server puts a job in a Queue like Amazon SQS
+    			- the Worker Serivice on EC2 or Lambda pulls off the Queue:
+    				- creates a thumbnail
+    				- updates a datatbase
+    				- stores the thumbnail in the Object Store
+
+
+
+
+
 
 
 
