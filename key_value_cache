@@ -1,0 +1,76 @@
+Key-value cache to save the results of the most recent web-server queries - https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/query_cache/README.md
+
+
+Step 1: use cases and constraints:
+
+	- user sends a search request resulting a cache hit
+	- user sends a search request resulting a cache miss
+	- high availability
+
+	Constraints and assumptions:
+
+		State assumptions:
+		- 10 million users
+		- 10 billion queries per month
+		- memory is limited
+
+		Usage calculations:
+		- cache stores ordered list of key:query, value:result:
+			- query - 50 bytes
+			- title - 20 bytes
+			- snippet - 200 bytes
+			total = 270 bytes
+		- 270 TB of data if all queries are unique and all stored
+			(270 bytes * 10 000 000 000 queries/month)
+		=> assumptions state limited memory - so we need to find a way
+			to expire content
+
+		Rate calculations:
+		- 4000 requests/second (10 billion reqs/month, 2.5 million seconds/month)
+
+
+Step 2: high-level design / core components;
+
+									   -> Reverse Index service
+	Client -> Web Server -> Query API |-> Document service
+									  -> Memory cache
+
+	Since the cache has a limited capacity we'll use LRU approach to expire older entries
+
+	- The client send request to the Web Server
+	- Web Server forwards the request to the Query API
+	- Query API:
+		- removes markup
+		- breaks-up text into terms
+		- fixes typos
+		- normalize capitalization
+		- converts the query to use boolean operations
+
+		- checks the Memory cache for the content matching query:
+			- if there is a hit:
+				- updates the cached entry position to the front of LRU cache
+				- returns the cached content
+			- else:
+				- uses the Reverse Index service to find the documents matching the query
+				- uses Document service to fetch titles and snippets
+				- updates Menory Cache with the content, placing an entry at the front of LRU cache
+
+    - cache impelementation:
+    	- Query API implementation
+    	- Node / LinkedList implementation
+    	- Cache implementation
+
+    - when to update the cache:
+    	- page content changed
+    	- page is removed or new page is added
+    	- the page rank changes
+    	=> set max time a cached entry can stay in the cache before it is updated - TTL (time to live)
+
+
+Step 3: scale the design:
+
+	Expanding memory cache to many machines:
+		- each machine in the cache cluster has it's own cache - simple, but most likely low cache hit
+		- each machine in the cluster has a copy of the whole cache - non-efficient
+		- the cache is shared accross all the machines in the cluster - more complex, but the best.
+		  See consistent hashing - https://github.com/donnemartin/system-design-primer#under-development
