@@ -1,0 +1,70 @@
+Amazon sales rank by category - https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/sales_rank/README.md
+
+Step 1: constraints and assumptions
+
+	- service calculates past week most popular products by category
+		(category 1: pr1, pr3, pr5; category 2: pr4, pr7, pr9, etc...)
+	- user views the past week's most popular products by category
+
+	State assumptions:
+		- no subcategories
+		- results  must be updated hourly:
+			- more popular products might be updated more frequently
+		- 10 million products
+		- 1000 categories
+		- 1 billion transactions / month
+		- 100 billion read requests / month
+		- 100:1 read to write ratio
+
+	Usage calcualtion:
+		- Size per transaction:
+			- created_at - 5 bytes
+			- producat_id - 8 bytes
+			- category_id - 4 bytes
+			- seller_id - 8 bytes
+			- buyer_id - 8 bytes
+			- quantity - 4 bytes
+			- total_price - 5 bytes
+			Total: ~ 40 bytes
+		- 40 bytes * 1 billion transactions = 40 GB of new transactions per month:
+			- 1.44 TB new transaction content in 3 years
+			- most are new transactions instead of updates to existing one
+		- 400 transactions / second
+		- 40000 read requests per second
+
+
+Step 2: high-level design:
+
+
+Step 3: core components:
+
+	- Store raw Sales API server log files on DFS or Object Store (Amazon S3) or specialized Analytics Database (Amazon Redshift or Google Big Query):
+		- log entry format:
+			timestamp	producat_id	 category_id  quantity 	total_price	 seller_id  buyer_id
+			    t1			23	 		13    		  2			20.00		1			1
+
+	- Sales Rank Service use MapReduce using server log as input and writing
+		the results to an aggregated table sales_rank in a SQL Database
+
+	- use multi-step MapReduce:
+		- Step 1 - transform the data to (category, product_id), sum(quantity)
+		- Step 2 - perform a distributed sort
+		// map reduce code here ....
+
+	- table sales_rank:
+
+		id int NOT NULL AUTO_INCREMENT
+		category_id int NOT_NULL
+		product_id int NOT NULL
+		PRIMARY_KEY(id)
+		FOREIGN KEY(category_id) references Categories(id)
+		FOREIGN KEY(product_id) REFERENCES Products(id)
+
+		We'll create an index on id, category_id, product_id to speed up lookups and to keep data in memory
+
+
+Step 4: scale the design:
+
+
+
+
