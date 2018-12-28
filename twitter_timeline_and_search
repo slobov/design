@@ -1,0 +1,67 @@
+twitter_timeline_and_search - https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/twitter/README.md
+
+Step 1 - 
+
+	use cases:
+
+		- user posts a tweet
+			- service pushes tweet to followers, send push notifications and emails
+		- user views the home timeline (activities from the people the user is following)
+		- user views the user timeline (activity from the user)
+		- user searches keywords
+
+	out of scope:
+
+		- twitter streaming / firehose
+		- stripping tweets due to user visibility settings:
+			- hide @reply if user is not following the person being replied to
+		- ananlytics
+
+	constraints:
+
+		General:
+
+			- posting a tweet should be fast:
+				- fanning out a tweet to all of your followers should be fast, 
+					unless you have millions of followers
+			- 100 million active users
+			- 500 million tweets per day or 15 billion tweets per month:
+				- each tweet averages a fanout of 10 deliveres
+				- 5 billion tweets delivered on fanout per day
+				- 150 billion tweets delivered on fanout per month
+			- ~8 billion reads per day 
+			- 250 billion read requests per month
+			- ~ 0.3 billion search requests per day 
+			- 10 billion searches per month
+
+		Timeline:
+
+			- viewing the timeline should be fast
+			- twitter is more read heavy than wwrite heavy
+				- optimize for fast reads of tweets
+			- ingesting tweets is write heavy
+
+		Search:
+
+			- search should be fast
+			- search is read-heavy
+
+	usage:
+
+		- size pre tweet:
+			- tweet_id - 8 bytes
+			- user_id - 32 bytes
+			- text - 140 bytes
+			- media 10 kb average
+			Total - ~10 kb
+		- 150 tb of new tweets per month:
+			- 10 kb * 500 million tweets per day * 30 days
+			- 5.4 pb of new tweets every 3 years
+		- 6000 tweets per second
+		- 60000 delivered tweets per second  
+		- 100000 read requests per second
+		- 4000 search requests per second
+
+Step 2 - high level design:
+	
+	
