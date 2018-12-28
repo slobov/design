@@ -65,3 +65,65 @@ Step 1 -
 Step 2 - high level design:
 	
 	
+Step 3 - design core components:
+
+	User posts a tweet:
+
+		- user timeline - store tweets in regular SQL database
+		- home timeline - trickier, because required 60000 tweets 
+			to be delivered per second, regular SQL doesn't work here
+			so we need NoSQL or memory cache:
+		- media should be stored in Object Store
+
+		Client posts a Tweet -> Web Server forwards the request to Write API 
+		-> Write API stores the tweet in in the user's timeline on a SQL database
+		-> Write API contacts Fan Out Service which does the following:
+			-> queries User Graph Service to find User's Followers and store / read
+			   them from cache if needed
+			-> stores the tweet in the Home Timeline of the User's followers in the
+				Memory Cache (to satisfy fast tweet posting requirement) - we could
+				use native Radis list ti insert them:
+				           tweet n+2                   tweet n+1                   tweet n
+				| 8 bytes   8 bytes  1 byte | 8 bytes   8 bytes  1 byte | 8 bytes   8 bytes  1 byte |
+				| tweet_id  user_id  meta   | tweet_id  user_id  meta   | tweet_id  user_id  meta   |	
+			-> stores the tweet in the Search Index Service
+			-> stores media in the Object Store
+			-> uses Notification Service to push notifications:
+				- uses asynchronous queue for that
+
+	User views the home timeline:
+
+		- client sent home timeline request to the Web Server
+		- Web Server forwards it to the Read API server
+		- Read API contacts Timeline Service
+		- Timeline Service:
+			- gets the timeline data stored in the memory cache
+			- queries Tweet Info service with a muliget to obtain additional
+				info about the tweets
+			- quesries User Infor Service with a multiget to obtain additional 
+				info about the user ids
+
+	User views the user timeline:
+
+		- client sent user timeline request to the Web Server
+		- Web Server forwards it to the Read API server
+		- Read API retreives user timeline from the SQL database
+
+	User searches keyword:
+
+		- client sents request to the Web Server
+		- Web Server forwards search request to the Search API server
+		- Search API server contacts Search Service which:
+			- parses/tokenize the input query
+			- queries the search cluster (Lucene / Elasticsearch):
+
+Step 4 - scale the design:
+
+	- do not use fan out for highly-followed users - search and inject 
+		their tweets directly to the user's home timeline
+
+	- keep only several hundred tweets for each home timeline in Memory Cache
+	- keep only active users timeline in the Memory Cache
+	- store only a month of tweets in Tweet Info service
+
+	
