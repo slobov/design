@@ -1,0 +1,65 @@
+Design mint.com - https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/mint/README.md
+
+Step 1: Outline usecases:
+
+	Use cases:
+
+		-  user connects finansical accounts
+		-  service extracts transactions from
+			the accounts:
+				- updates daily
+				- categorization:
+					- automatic categorization by default
+					- allows user override
+				- analyzes monthly (daily? ) spendings
+					by category
+		- service recommends a budget:
+			- allows user to manually set a budget
+			- sent notifications when approaching (how to define approaching?)
+				or exceed a budget
+
+
+	Constraints :
+
+		- adding or removing financial accounts is relatively rare
+			=> optimized for read so can be cached
+		- budget notifications don't need to be instant
+			=> can be done as a batch job
+			=> if instant is needed - we need streaming solution
+
+		- 10 million users:
+			- 10 budget categories per user (can we add more? )
+				-> categories:
+					- housing = $1000
+					- food = $200
+					- gas = $50
+					- etc...
+				-> sellers are used to determine trasaction category
+					(transaction -> seller -> budget category, ~ 50000 sellers)
+				-> 100 millions budget items
+		- 5 billion transactions per month
+		- 500 million read requests per month
+		- 10:1 write to read ratio:
+			- users make transactions daily, but few visit the site daily
+
+		Usage:
+			- size per transaction:
+				- user_id - 8 bytes
+				- created_at - 5 bytes
+				- seller - 32 bytes
+				- amount - 5 bytes
+					Total: ~50 bytes
+			- 250 gb of new transaction per month:
+				- 50 bytes * 5 billion transactions per month
+				- 9 Tb of new transactions in 3 years
+				- assume most are new transactions instead of updates to existing ones
+			- 2000 transactions (writes) per second on average
+			- 200 reads per second on average
+
+
+	Step 2: high level design:
+
+
+	Step 3: Design core components:
+
+
